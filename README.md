@@ -1,3 +1,3 @@
 # Climbing_Gym
-Jakub Prygiel
+Jakub Prygiel </br>
 Zuzanna Jedynak
