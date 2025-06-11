@@ -2,6 +2,7 @@ package com.project.climbinggym.model;
 
 import com.project.climbinggym.model.nested.user.Entry;
 import com.project.climbinggym.model.nested.user.Reservation;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -12,6 +13,7 @@ import java.util.List;
 public class User {
     public User(){}
 
+    @Id
     private String id;
     private String firstname;
     private String lastname;

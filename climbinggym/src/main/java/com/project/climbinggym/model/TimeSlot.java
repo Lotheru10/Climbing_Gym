@@ -1,6 +1,7 @@
 package com.project.climbinggym.model;
 
 import com.project.climbinggym.model.nested.timeslot.TimeSlotDetails;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 public class TimeSlot {
     public TimeSlot(){}
 
+    @Id
     private String id;
     private LocalDate date;
     private TimeSlotDetails details;
