@@ -15,4 +15,40 @@ public class Reservation {
     @Field("people_amount")
     private int peopleAmount;
     private char status;
+
+    // GETTERS AND SETTERS
+    public String getReservationId() {
+        return reservationId;
+    }
+    public void setReservationId(String reservationId) {
+        this.reservationId = reservationId;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+    public void setDate(LocalDate date) {
+        this.date = date;
+    }
+
+    public String getDayTime() {
+        return dayTime;
+    }
+    public void setDayTime(String dayTime) {
+        this.dayTime = dayTime;
+    }
+
+    public int getPeopleAmount() {
+        return peopleAmount;
+    }
+    public void setPeopleAmount(int peopleAmount) {
+        this.peopleAmount = peopleAmount;
+    }
+
+    public char getStatus() {
+        return status;
+    }
+    public void setStatus(char status) {
+        this.status = status;
+    }
 }
