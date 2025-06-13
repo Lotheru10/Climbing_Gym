@@ -1,4 +1,4 @@
-package com.project.climbinggym;
+package com.project.climbinggym.repository;
 
 import com.project.climbinggym.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;

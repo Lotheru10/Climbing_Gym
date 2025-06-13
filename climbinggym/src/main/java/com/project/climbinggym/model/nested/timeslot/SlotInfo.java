@@ -6,9 +6,9 @@ public class SlotInfo {
     public SlotInfo(){}
 
     @Field("max_slots")
-    private int maxSlots;
+    private int maxSlots = 30; //default values
     @Field("reserved_slots")
-    private int reservedSlots;
+    private int reservedSlots = 0;
 
     // GETTERS AND SETTERS
     public int getMaxSlots() {
