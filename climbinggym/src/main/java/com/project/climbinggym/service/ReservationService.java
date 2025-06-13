@@ -20,7 +20,6 @@ public class ReservationService {
     private TimeSlotService timeSlotService;
 
 
-
     // Add reservation to user and update time slot
     public boolean addReservationToUser(String userId, Reservation reservation) {
         try {

@@ -68,6 +68,7 @@ public class UserController {
         }
     }
 
+    // lol czemu ten mapping jest taki dlugi, moze go skroce albo dodam wiecej opcji wyszukiwania
     @GetMapping("/search/lastname/{lastname}")
     public ResponseEntity<List<User>> getUsersByLastname(@PathVariable String lastname) {
         List<User> users = userService.getUsersByLastname(lastname);

@@ -3,9 +3,9 @@ package com.project.climbinggym.model.nested.timeslot;
 public class TimeSlotDetails {
     public TimeSlotDetails(){}
 
-    private SlotInfo morning = new SlotInfo();
-    private SlotInfo noon = new SlotInfo();
-    private SlotInfo evening = new SlotInfo();
+    private SlotInfo morning = new SlotInfo(20);
+    private SlotInfo noon = new SlotInfo(30);
+    private SlotInfo evening = new SlotInfo(20);
 
     //GETTERS AND SETTERS
 
