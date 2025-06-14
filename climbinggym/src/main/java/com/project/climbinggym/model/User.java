@@ -1,5 +1,6 @@
 package com.project.climbinggym.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.project.climbinggym.model.nested.user.Entry;
 import com.project.climbinggym.model.nested.user.Reservation;
 import org.springframework.data.annotation.Id;
@@ -7,6 +8,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Document(collection = "users")
@@ -17,6 +19,7 @@ public class User {
     private String id;
     private String firstname;
     private String lastname;
+    @JsonProperty("register_date")
     @Field("register_date")
     private LocalDate registerDate;
     private List<Entry> entries;

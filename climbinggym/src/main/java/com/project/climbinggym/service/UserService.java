@@ -1,7 +1,6 @@
 package com.project.climbinggym.service;
 
 import com.project.climbinggym.model.User;
-import com.project.climbinggym.model.nested.user.Reservation;
 import com.project.climbinggym.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -58,7 +57,6 @@ public class UserService {
                 })
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
     }
-
 
     public List<User> getUsersByLastname(String lastname) {
         return userRepository.findByLastname(lastname);

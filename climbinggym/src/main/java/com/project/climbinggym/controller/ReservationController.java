@@ -17,7 +17,7 @@ public class ReservationController {
     @Autowired
     private ReservationService reservationService;
 
-        // Check availability
+    // Check availability
     @GetMapping("/availability")
     public ResponseEntity<Boolean> checkAvailability(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
@@ -37,4 +37,6 @@ public class ReservationController {
         int availableSlots = reservationService.getAvailableSlots(date, dayTime);
         return new ResponseEntity<>(availableSlots, HttpStatus.OK);
     }
+
+
 }

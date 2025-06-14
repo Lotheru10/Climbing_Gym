@@ -1,16 +1,22 @@
 package com.project.climbinggym.model.nested.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-public class Entry {
-    public Entry(){}
+import java.time.LocalDate;
+import java.util.UUID;
 
+public class Entry {
+    public Entry(){
+        entryId = generateEntryId();
+    }
+
+    @JsonProperty("entry_id")
     @Field("entry_id")
     private String entryId;
     private String type;
     private Prices prices;
-    @Field("time_limit")
-    private int timeLimit;
+    private LocalDate deadline; //zmienione
     private int amount;
 
     // GETTERS AND SETTERS
@@ -35,11 +41,11 @@ public class Entry {
         this.prices = prices;
     }
 
-    public int getTimeLimit() {
-        return timeLimit;
+    public LocalDate getDeadline() {
+        return deadline;
     }
-    public void setTimeLimit(int timeLimit) {
-        this.timeLimit = timeLimit;
+    public void setDeadline(LocalDate deadline) {
+        this.deadline = deadline;
     }
 
     public int getAmount() {
@@ -47,5 +53,10 @@ public class Entry {
     }
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+
+
+    private String generateEntryId() {
+        return "e-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

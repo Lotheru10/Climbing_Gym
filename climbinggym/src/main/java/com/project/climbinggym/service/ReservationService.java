@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -19,6 +18,9 @@ public class ReservationService {
     @Autowired
     private TimeSlotService timeSlotService;
 
+    @Autowired
+    private EntryService entryService;
+
 
     // Add reservation to user and update time slot
     public boolean addReservationToUser(String userId, Reservation reservation) {
@@ -29,11 +31,21 @@ public class ReservationService {
             if(reservation.getStatus() == 0){
                 reservation.setStatus('A');
             }
+            reservation.setReservationId(generateReservationId());
             LocalDate date = reservation.getDate();
             String dayTime = reservation.getDayTime();
             int peopleAmount = reservation.getPeopleAmount();
             if (!timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount)) {
                 throw new RuntimeException("Not enough slots available for reservation");
+            }
+
+            int userEntries = entryService.getUsersEntryCountForDate(userId, date)
+                    .values()
+                    .stream()
+                    .mapToInt(Integer::intValue)
+                    .sum();
+            if(userEntries < reservation.getPeopleAmount()){
+                throw new RuntimeException("Not enough entries available for people reserved");
             }
 
             user.getReservations().add(reservation);
@@ -46,52 +58,10 @@ public class ReservationService {
             return true;
 
         } catch (Exception e) {
-            // Transaction will automatically rollback due to @Transactional
             throw new RuntimeException("Failed to add reservation: " + e.getMessage(), e);
         }
     }
 
-
-    // AIowa wersja, moja wyżej^ tą na razie zachowuję jakby okazała się że jest wygodniejsza
-//    @Transactional
-//    public boolean addReservationToUser(String userId, LocalDate date, String dayTime, int peopleAmount) {
-//        try {
-//            // 1. Check if user exists
-//            User user = userService.getUserById(userId)
-//                    .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-//
-//            // 2. Check slot availability
-//            if (!timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount)) {
-//                throw new RuntimeException("Not enough slots available for reservation");
-//            }
-//
-//            // 3. Create reservation object
-//            Reservation reservation = new Reservation();
-//            reservation.setReservationId(generateReservationId());
-//            reservation.setDate(date);
-//            reservation.setDayTime(dayTime);
-//            reservation.setPeopleAmount(peopleAmount);
-//            reservation.setStatus('A'); // A = Active, C = Cancelled, P = Pending
-//
-//            // 4. Add reservation to user
-//            user.getReservations().add(reservation);
-//
-//            // 5. Update time slot (this will create the slot if it doesn't exist)
-//            boolean timeSlotUpdated = timeSlotService.updateReservationCount(date, dayTime, peopleAmount, true);
-//            if (!timeSlotUpdated) {
-//                throw new RuntimeException("Failed to update time slot");
-//            }
-//
-//            // 6. Save user with new reservation
-//            userService.updateUser(userId, user);
-//
-//            return true;
-//
-//        } catch (Exception e) {
-//            // Transaction will automatically rollback due to @Transactional
-//            throw new RuntimeException("Failed to add reservation: " + e.getMessage(), e);
-//        }
-//    }
 
     // Cancel reservation
     @Transactional
@@ -140,13 +110,6 @@ public class ReservationService {
 
             // Only update time slot if reservation was active
             if (reservation.getStatus() == 'A') {
-//                boolean timeSlotUpdated = timeSlotService.updateReservationCount(
-//                        reservation.getDate(),
-//                        reservation.getDayTime(),
-//                        reservation.getPeopleAmount(),
-//                        false
-//                );
-
                 boolean cancelled = cancelReservation(userId, reservationId);
                 if (!cancelled) {
                     throw new RuntimeException("Failed to cancel the reservation");
@@ -189,9 +152,7 @@ public class ReservationService {
     }
 
     // Generate unique reservation ID
-    // DO PRZEMYŚLENIA CZY TRZYMAMY SIĘ "rN" (N-liczba)
-    // CZY UPROSZCZAMY NA LOSOWE WARTOŚCI
     private String generateReservationId() {
-        return "RES-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "r-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }

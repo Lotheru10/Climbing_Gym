@@ -1,5 +1,6 @@
 package com.project.climbinggym.model.nested.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
@@ -10,8 +11,10 @@ public class Reservation {
     @Field("reservation_id")
     private String reservationId;
     private LocalDate date;
+    @JsonProperty("day_time")
     @Field("day_time")
     private String dayTime;
+    @JsonProperty("people_amount")
     @Field("people_amount")
     private int peopleAmount;
     private char status;

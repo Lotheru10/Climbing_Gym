@@ -1,5 +1,7 @@
 package com.project.climbinggym.controller;
 
+import com.project.climbinggym.model.nested.user.Entry;
+import com.project.climbinggym.service.EntryService;
 import com.project.climbinggym.service.ReservationService;
 import com.project.climbinggym.service.UserService;
 import com.project.climbinggym.model.User;
@@ -21,6 +23,9 @@ public class UserController {
 
     @Autowired
     private ReservationService reservationService;
+
+    @Autowired
+    private EntryService entryService;
 
     //może dodać jakąś walidację do Usera? jeszcze nwm gdzie to zrobić
     // i co konkretnie walidowac tak wlasciwie
@@ -127,6 +132,15 @@ public class UserController {
         } catch (Exception e) {
             return new ResponseEntity<>("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+
+    // Entries actions ===========================================================
+
+    @GetMapping("/{userId}/entries")
+    public ResponseEntity<List<Entry>> getActiveEntries(@PathVariable String userId) {
+        List<Entry> entries = entryService.getUserActiveEntries(userId);
+        return new ResponseEntity<>(entries, HttpStatus.OK);
     }
 
 }
