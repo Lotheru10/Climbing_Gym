@@ -18,7 +18,6 @@ public class TimeSlotService {
     @Autowired
     private TimeSlotRepository timeSlotRepository;
 
-
     public Iterable<TimeSlot> getAllTimeSlots() {
         return timeSlotRepository.findAll();
     }
