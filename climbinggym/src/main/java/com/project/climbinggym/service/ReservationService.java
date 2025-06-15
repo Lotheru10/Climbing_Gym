@@ -30,6 +30,7 @@ public class ReservationService {
     }
 
 
+    @Transactional
     public boolean addReservationToUser(String userId, Reservation reservation) {
         ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
         lock.lock();
@@ -74,7 +75,6 @@ public class ReservationService {
         }
     }
 
-    // Cancel reservation
     @Transactional
     public boolean cancelReservation(String userId, String reservationId) {
         try {
@@ -89,7 +89,11 @@ public class ReservationService {
             ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
             lock.lock();
 
-            reservation.setStatus('C'); // Cancelled
+
+            if(reservation.getDate().isAfter(LocalDate.now().minusDays(2))) {
+                throw new RuntimeException("Reservation can be cancelled 3 days prior at latest");
+            }
+            reservation.setStatus('C');
 
             boolean timeSlotUpdated = timeSlotService.updateReservationCount(
                     reservation.getDate(),
@@ -121,7 +125,6 @@ public class ReservationService {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
-            // Only update time slot if reservation was active
             if (reservation.getStatus() == 'A') {
                 boolean cancelled = cancelReservation(userId, reservationId);
                 if (!cancelled) {

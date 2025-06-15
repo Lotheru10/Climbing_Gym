@@ -86,7 +86,7 @@ public class TimeSlotService {
                 targetSlot = details.getEvening();
                 break;
             default:
-                return false; // Invalid day time
+                return false;
         }
 
         int currentReserved = targetSlot.getReservedSlots();

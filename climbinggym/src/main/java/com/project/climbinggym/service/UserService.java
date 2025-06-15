@@ -38,7 +38,6 @@ public class UserService {
         }
     }
 
-    // Updates the entire user
     public User updateUser(String id, User updatedUser) {
         return userRepository.findById(id)
                 .map(user -> {
