@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class ReservationService {
@@ -21,9 +23,17 @@ public class ReservationService {
     @Autowired
     private EntryService entryService;
 
+    private final ConcurrentHashMap<String, ReentrantLock> timeSlotLocks = new ConcurrentHashMap<>();
+    private ReentrantLock getTimeSlotLock(LocalDate date, String dayTime) {
+        String lockKey = date.toString() + "-" + dayTime.toLowerCase();
+        return timeSlotLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
+    }
 
-    // Add reservation to user and update time slot
+
     public boolean addReservationToUser(String userId, Reservation reservation) {
+        ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+        lock.lock();
+
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -59,9 +69,10 @@ public class ReservationService {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to add reservation: " + e.getMessage(), e);
+        } finally {
+            lock.unlock();
         }
     }
-
 
     // Cancel reservation
     @Transactional
@@ -74,6 +85,9 @@ public class ReservationService {
                     .filter(r -> r.getReservationId().equals(reservationId))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+            ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+            lock.lock();
 
             reservation.setStatus('C'); // Cancelled
 
@@ -89,14 +103,13 @@ public class ReservationService {
             }
 
             userService.updateUser(userId, user);
+            lock.unlock();
             return true;
-
         } catch (Exception e) {
             throw new RuntimeException("Failed to cancel reservation: " + e.getMessage(), e);
         }
     }
 
-    // Remove reservation completely (for admin purposes)
     @Transactional
     public boolean removeReservation(String userId, String reservationId) {
         try {
@@ -125,12 +138,10 @@ public class ReservationService {
         }
     }
 
-    // Check availability for a specific date and time
     public boolean checkAvailability(LocalDate date, String dayTime, int peopleAmount) {
         return timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount);
     }
 
-    // Get available slots for a specific date and time
     public int getAvailableSlots(LocalDate date, String dayTime) {
         return timeSlotService.getTimeSlotByDate(date)
                 .map(timeSlot -> {
@@ -148,10 +159,9 @@ public class ReservationService {
                             return 0;
                     }
                 })
-                .orElse(30); // Default available slots if no time slot exists yet
+                .orElse(30);
     }
 
-    // Generate unique reservation ID
     private String generateReservationId() {
         return "r-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }

@@ -37,6 +37,4 @@ public class ReservationController {
         int availableSlots = reservationService.getAvailableSlots(date, dayTime);
         return new ResponseEntity<>(availableSlots, HttpStatus.OK);
     }
-
-
 }

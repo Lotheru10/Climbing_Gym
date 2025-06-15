@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*") // do ewentualnej podmianki/usunięcia
+@CrossOrigin(origins = "*")
 public class UserController {
 
     @Autowired
@@ -26,9 +26,6 @@ public class UserController {
 
     @Autowired
     private EntryService entryService;
-
-    //może dodać jakąś walidację do Usera? jeszcze nwm gdzie to zrobić
-    // i co konkretnie walidowac tak wlasciwie
 
     // Basic CRUD actions ============================================================
     // Create
@@ -46,6 +43,12 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    @GetMapping("/search/{lastname}")
+    public ResponseEntity<List<User>> getUsersByLastname(@PathVariable String lastname) {
+        List<User> users = userService.getUsersByLastname(lastname);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
@@ -71,13 +74,6 @@ public class UserController {
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-    }
-
-    // lol czemu ten mapping jest taki dlugi, moze go skroce albo dodam wiecej opcji wyszukiwania
-    @GetMapping("/search/lastname/{lastname}")
-    public ResponseEntity<List<User>> getUsersByLastname(@PathVariable String lastname) {
-        List<User> users = userService.getUsersByLastname(lastname);
-        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
 

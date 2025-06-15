@@ -18,8 +18,7 @@ public class EntryController {
     @Autowired
     private EntryService entryService;
 
-
-    // User actions
+    // User actions =====================
     @PostMapping("/purchase")
     public ResponseEntity<String> purchaseEntry(
             @RequestParam String userId,
@@ -60,21 +59,21 @@ public class EntryController {
         }
     }
 
+    // Read
     @GetMapping
     public ResponseEntity<List<EntryType>> getEntryTypes() {
         List<EntryType> entryTypes = entryService.getAllEntryTypes();
         return new ResponseEntity<>(entryTypes, HttpStatus.OK);
     }
 
-    //może niekonieczne w kontrolerze?
     @GetMapping("/{userId}")
     public ResponseEntity<Map<String, Integer>> getUsersEntryCount(@PathVariable String userId) {
         Map<String, Integer> userCounts = entryService.getUsersEntryCount(userId);
         return new ResponseEntity<>(userCounts, HttpStatus.OK);
     }
 
-
-    // Admin actions
+    // Admin actions ====================
+    // Create
     @PostMapping
     public ResponseEntity<EntryType> createEntryType(@RequestBody EntryType entryType) {
         try{
@@ -85,6 +84,7 @@ public class EntryController {
         }
     }
 
+    // Update
     @PutMapping("/{id}")
     public ResponseEntity<EntryType> updateEntryType(@PathVariable String id, @RequestBody EntryType entryType) {
         try{
@@ -95,6 +95,7 @@ public class EntryController {
         }
     }
 
+    // Delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEntryType(@PathVariable String id) {
         try{
@@ -104,9 +105,4 @@ public class EntryController {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
-
-
-
-
-
 }

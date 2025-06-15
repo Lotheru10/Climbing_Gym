@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class EntryService {
@@ -23,6 +25,11 @@ public class EntryService {
 
     @Autowired
     private EntryTypeRepository entryTypeRepository;
+
+    private final ConcurrentHashMap<String, ReentrantLock> userLocks = new ConcurrentHashMap<>();
+    private ReentrantLock getUserLock(String userId) {
+        return userLocks.computeIfAbsent(userId, k -> new ReentrantLock());
+    }
 
     // Create
     public EntryType createEntryType(EntryType entryType) {
@@ -61,9 +68,12 @@ public class EntryService {
                 .orElseThrow(() -> new RuntimeException("Entry type not found with id: " + id));
     }
 
-    // User Actions
+    // User Actions ====================
     @Transactional
     public boolean purchaseEntryForUser(String userId, String entryTypeId, boolean isReduced) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -87,11 +97,16 @@ public class EntryService {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to purchase entry: " + e.getMessage(), e);
+        } finally {
+            userLock.unlock();
         }
     }
 
     @Transactional
     public boolean useEntry(String userId, String entryId, int amount) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+
         try {
             User user = userService.getUserById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
@@ -111,6 +126,8 @@ public class EntryService {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to use entry: " + e.getMessage(), e);
+        } finally {
+            userLock.unlock();
         }
     }
 

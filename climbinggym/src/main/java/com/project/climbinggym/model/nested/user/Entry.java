@@ -16,7 +16,7 @@ public class Entry {
     private String entryId;
     private String type;
     private Prices prices;
-    private LocalDate deadline; //zmienione
+    private LocalDate deadline;
     private int amount;
 
     // GETTERS AND SETTERS

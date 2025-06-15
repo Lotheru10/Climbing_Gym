@@ -1,6 +1,5 @@
 package com.project.climbinggym.service;
 
-
 import com.project.climbinggym.model.TimeSlot;
 import com.project.climbinggym.model.nested.timeslot.SlotInfo;
 import com.project.climbinggym.model.nested.timeslot.TimeSlotDetails;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.Optional;
 
-// TA KLASA JEST JESZCZE DO DOCZYSZCZENIA
 @Service
 public class TimeSlotService {
 
@@ -39,21 +37,40 @@ public class TimeSlotService {
         return timeSlotRepository.save(newTimeSlot);
     }
 
+    public TimeSlot createCustomTimeSlot(TimeSlot timeSlot) {
+        return timeSlotRepository.save(timeSlot);
+    }
+
+    public TimeSlot updateTimeSlot(String id, TimeSlot timeSlot) {
+        return timeSlotRepository.findById(id)
+                .map(slot -> {
+                    slot.setDate(timeSlot.getDate());
+                    slot.setDetails(timeSlot.getDetails());
+                    return timeSlotRepository.save(slot);
+                })
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+
+    public void deleteTimeSlot(String id) {
+        if (timeSlotRepository.existsById(id)) {
+            timeSlotRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Time slot not found with id: " + id);
+        }
+    }
+
     public boolean updateReservationCount(LocalDate date, String dayTime, int peopleAmount, boolean isAddition) {
         Optional<TimeSlot> timeSlotOpt = timeSlotRepository.findByDate(date);
 
         if (timeSlotOpt.isEmpty()) {
             TimeSlot newTimeSlot = getOrCreateTimeSlot(date);
             return updateSlotReservation(newTimeSlot, dayTime, peopleAmount, true);
-            // nigdy nie powinno się wydarzyć
-            //return false; // Can't subtract from non-existent slot
         }
 
         TimeSlot timeSlot = timeSlotOpt.get();
         return updateSlotReservation(timeSlot, dayTime, peopleAmount, isAddition);
     }
 
-    // Helper method to update specific slot reservation
     private boolean updateSlotReservation(TimeSlot timeSlot, String dayTime, int peopleAmount, boolean isAddition) {
         TimeSlotDetails details = timeSlot.getDetails();
         SlotInfo targetSlot = null;
@@ -72,27 +89,12 @@ public class TimeSlotService {
                 return false; // Invalid day time
         }
 
-//        if (targetSlot == null) {        //  nigdy nie powinno się zdarzyć, raczej do usunięcia ale
-//            targetSlot = new SlotInfo(); //  zostawiam jakby coś się wykrzaczało
-//            switch (dayTime.toLowerCase()) {
-//                case "morning":
-//                    details.setMorning(targetSlot);
-//                    break;
-//                case "noon":
-//                    details.setNoon(targetSlot);
-//                    break;
-//                case "evening":
-//                    details.setEvening(targetSlot);
-//                    break;
-//            }
-//        }
-
         int currentReserved = targetSlot.getReservedSlots();
         int newReservedCount;
         if (isAddition) {
             newReservedCount = currentReserved + peopleAmount;
             if (newReservedCount > targetSlot.getMaxSlots()) {
-                return false; // Not enough slots available
+                return false;
             }
         } else {
             newReservedCount = Math.max(0, currentReserved - peopleAmount);
@@ -105,12 +107,7 @@ public class TimeSlotService {
 
 
     public boolean checkSlotAvailability(LocalDate date, String dayTime, int peopleAmount) {
-        Optional<TimeSlot> timeSlotOpt = timeSlotRepository.findByDate(date);
-        if (timeSlotOpt.isEmpty()) {
-            return peopleAmount <= 30; //default ilosc ludzi
-        }
-
-        TimeSlot timeSlot = timeSlotOpt.get();
+        TimeSlot timeSlot = getOrCreateTimeSlot(date);
         TimeSlotDetails details = timeSlot.getDetails();
         SlotInfo targetSlot = null;
 
