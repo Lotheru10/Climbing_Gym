@@ -170,9 +170,7 @@ Następnie dla każdej kolekcji powstało `Repository`, `Service` i `Controller`
    }
    ```
 
-### Funkcjonalność aplikacji
-
-_Podstawowe operacje CRUD_
+### Podstawowe operacje CRUD
 
 Dla każdej kolekcji zostały zaimplementowane operacje CRUD. Ich logika (oparta na gotowych metodach udostępnianych przez `Repository`) została umieszczona w warstwie `Service`. Następnie `Controller` odpowiada za obsługę żądań i wywoływanie odpowiednich metod serwisowych.
 
@@ -473,18 +471,15 @@ public class SlotReservationsView {
         private int reservedSlots;
         @JsonProperty("available_slots")
         private int availableSlots;
-        @JsonProperty("total_people")
-        private int totalPeople;
         @JsonProperty("active_reservations_count")
         private int activeReservationsCount;
 
         public SlotStats() {}
 
-        public SlotStats(int maxSlots, int reservedSlots, int totalPeople, int activeReservationsCount) {
+        public SlotStats(int maxSlots, int totalPeople, int activeReservationsCount) {
             this.maxSlots = maxSlots;
-            this.reservedSlots = reservedSlots;
-            this.availableSlots = maxSlots - reservedSlots;
-            this.totalPeople = totalPeople;
+            this.reservedSlots = totalPeople;
+            this.availableSlots = maxSlots - this.reservedSlots;
             this.activeReservationsCount = activeReservationsCount;
         }
 
@@ -537,13 +532,10 @@ public SlotReservationsView getTimeSlotReservationsView(LocalDate date) {
     view.setEveningReservations(eveningReservations);
 
     view.setMorningStats(calculateSlotStats(timeSlot.getDetails().getMorning().getMaxSlots(),
-            timeSlot.getDetails().getMorning().getReservedSlots(),
             morningReservations));
     view.setNoonStats(calculateSlotStats(timeSlot.getDetails().getNoon().getMaxSlots(),
-            timeSlot.getDetails().getNoon().getReservedSlots(),
             noonReservations));
     view.setEveningStats(calculateSlotStats(timeSlot.getDetails().getEvening().getMaxSlots(),
-            timeSlot.getDetails().getEvening().getReservedSlots(),
             eveningReservations));
 
     return view;
@@ -597,6 +589,43 @@ public class ViewController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+}
+```
+
+Dokument wynikowy po wywołaniu żądania GET na `/api/view` z parametrem `date = 2025-07-01`
+
+```json
+{
+  "date": "2025-07-01",
+  "morning_reservations": [
+    {
+      "status": "A",
+      "reservation_id": "r1",
+      "user_name": "Harry Potter",
+      "user_id": "u1",
+      "people_amount": 3
+    }
+  ],
+  "noon_reservations": [],
+  "evening_reservations": [],
+  "morning_stats": {
+    "max_slots": 20,
+    "reserved_slots": 3,
+    "available_slots": 17,
+    "active_reservations_count": 1
+  },
+  "noon_stats": {
+    "max_slots": 30,
+    "reserved_slots": 0,
+    "available_slots": 30,
+    "active_reservations_count": 0
+  },
+  "evening_stats": {
+    "max_slots": 20,
+    "reserved_slots": 0,
+    "available_slots": 20,
+    "active_reservations_count": 0
+  }
 }
 ```
 
