@@ -2,7 +2,7 @@
 
 ### Autorzy: Zuzanna Jedynak i Jakub Prygiel
 
-Projekt na Bazy Danych 2. Został zrealizowany z użyciem nierelacyjnej bazy MongoDB, a implementacje działania CRUD i HTTP zostały napisane w Javie z pomocą Spring Boot'a.
+Projekt na Bazy Danych 2. Został zrealizowany z użyciem nierelacyjnej bazy MongoDB, a implementacje operacji CRUD i żądań HTTP zostały napisane w Javie z pomocą framework'a Spring Boot. Wszystkie testy zapytań i odpowiedzi były przeprowadzane w Postman'ie.
 
 ---
 
