@@ -176,6 +176,8 @@ Dla każdej kolekcji zostały zaimplementowane operacje CRUD. Ich logika (oparta
 
 Podgląd implementacji operacji dla `users`
 
+\pagebreak
+
 ```java
 @Service
 public class UserService {
@@ -591,7 +593,7 @@ public class ViewController {
     }
 }
 ```
-
+\pagebreak
 Dokument wynikowy po wywołaniu żądania GET na `/api/view` z parametrem `date = 2025-07-01`
 
 ```json
@@ -628,7 +630,7 @@ Dokument wynikowy po wywołaniu żądania GET na `/api/view` z parametrem `date 
   }
 }
 ```
-
+\pagebreak
 ### Kontrola równoczesnego dostępu do danych
 
 Aby zapobiec równoczesnych zmianach w danych, które mogą prowadzić do błędów, używana jest współbieżna mapa `ConcurrentHashMap` trzymająca blokady `ReentrantLock` dla konkretnych danych. Przy rozpoczęciu operacji dane są blokowane, a dostęp do nich pozostaje zablokowany aż do zakończenia transakcji, co zapewnia bezpieczeństwo i spójność podczas jednoczesnych żądań wielu użytkowników.
