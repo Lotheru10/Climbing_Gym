@@ -61,13 +61,10 @@ public class ViewService {
         view.setEveningReservations(eveningReservations);
 
         view.setMorningStats(calculateSlotStats(timeSlot.getDetails().getMorning().getMaxSlots(),
-                timeSlot.getDetails().getMorning().getReservedSlots(),
                 morningReservations));
         view.setNoonStats(calculateSlotStats(timeSlot.getDetails().getNoon().getMaxSlots(),
-                timeSlot.getDetails().getNoon().getReservedSlots(),
                 noonReservations));
         view.setEveningStats(calculateSlotStats(timeSlot.getDetails().getEvening().getMaxSlots(),
-                timeSlot.getDetails().getEvening().getReservedSlots(),
                 eveningReservations));
 
         return view;
@@ -85,11 +82,11 @@ public class ViewService {
         return views;
     }
 
-    private SlotReservationsView.SlotStats calculateSlotStats(int maxSlots, int reservedSlots, List<SlotReservationsView.ReservationSummary> reservations) {
+    private SlotReservationsView.SlotStats calculateSlotStats(int maxSlots, List<SlotReservationsView.ReservationSummary> reservations) {
         int totalPeople = reservations.stream()
                 .mapToInt(SlotReservationsView.ReservationSummary::getPeopleAmount)
                 .sum();
 
-        return new SlotReservationsView.SlotStats(maxSlots, reservedSlots, totalPeople, reservations.size());
+        return new SlotReservationsView.SlotStats(maxSlots, totalPeople, reservations.size());
     }
 }

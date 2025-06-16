@@ -145,18 +145,17 @@ public class SlotReservationsView {
         private int reservedSlots;
         @JsonProperty("available_slots")
         private int availableSlots;
-        @JsonProperty("total_people")
-        private int totalPeople;
+//        @JsonProperty("total_people")
+//        private int totalPeople;
         @JsonProperty("active_reservations_count")
         private int activeReservationsCount;
 
         public SlotStats() {}
 
-        public SlotStats(int maxSlots, int reservedSlots, int totalPeople, int activeReservationsCount) {
+        public SlotStats(int maxSlots, int totalPeople, int activeReservationsCount) {
             this.maxSlots = maxSlots;
-            this.reservedSlots = reservedSlots;
-            this.availableSlots = maxSlots - reservedSlots;
-            this.totalPeople = totalPeople;
+            this.reservedSlots = totalPeople;
+            this.availableSlots = maxSlots - this.reservedSlots;
             this.activeReservationsCount = activeReservationsCount;
         }
 
@@ -180,13 +179,6 @@ public class SlotReservationsView {
         }
         public void setAvailableSlots(int availableSlots) {
             this.availableSlots = availableSlots;
-        }
-
-        public int getTotalPeople() {
-            return totalPeople;
-        }
-        public void setTotalPeople(int totalPeople) {
-            this.totalPeople = totalPeople;
         }
 
         public int getActiveReservationsCount() {
