@@ -655,3 +655,10 @@ public boolean addReservationToUser(String userId, Reservation reservation) {
     }
 }
 ```
+
+## Frontend
+Zdecydowaliśmy sie dodać do naszego projektu frontend. Użyliśmy React + Vite, a do komunikacji z backendem używamy fetch, np: 
+```js
+fetch("http://localhost:8080/api/users")
+```
+aplikacje uruchamiamy w folderze climbing-gym-frontend, za pomocą komendy npm run dev. Domyślnie uruchomi się ona na http://localhost:5173
