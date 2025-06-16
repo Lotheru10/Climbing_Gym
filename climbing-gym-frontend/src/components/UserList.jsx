@@ -106,7 +106,7 @@ function UserList() {
                             </>
                         ) : (
                             <>
-                                {user.firstname} {user.lastname} ({user.registerDate})
+                                {user.firstname} {user.lastname} { }
                                 <button onClick={() => handleDelete(user.id)}>Delete</button>
                                 <button onClick={() => handleEditClick(user)}>Edit</button>
                                 <button onClick={() => toggleReservations(user.id)}>

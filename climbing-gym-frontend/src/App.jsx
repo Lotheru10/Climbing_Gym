@@ -4,6 +4,7 @@ import UserList from "./components/UserList.jsx"
 import AddUser from "./components/AddUser.jsx";
 import TodayPanelView from "./components/TodayPanelView.jsx";
 import MonthViewPanel from "./components/MonthViewPanel.jsx";
+import DayViewPanel from "./components/SelectedDayView.jsx";
 
 
 const VIEWS = {
@@ -12,6 +13,7 @@ const VIEWS = {
     RESERVATION_PAGE: 'reservation_page',
     TODAY: 'today',
     MONTH: 'month',
+    DAY: 'DAY',
     USERS: "users",
     ADD_USER: "add_user",
 };
@@ -61,6 +63,8 @@ function App() {
                     <br/>
                     <button onClick={() => setView(VIEWS.MONTH)}>Show reservation for the past month</button>
                     <br/>
+                    <button onClick={() => setView(VIEWS.DAY)}>Show reservation for the selected day</button>
+                    <br/>
 
                     <button onClick={() => setView(VIEWS.HOME)}>Go back</button>
 
@@ -75,6 +79,12 @@ function App() {
             {view === VIEWS.MONTH && (
                 <>
                     <MonthViewPanel/>
+                    <button onClick={() => setView(VIEWS.RESERVATION_PAGE)}>Go back</button>
+                </>
+            )}
+            {view === VIEWS.DAY && (
+                <>
+                    <DayViewPanel/>
                     <button onClick={() => setView(VIEWS.RESERVATION_PAGE)}>Go back</button>
                 </>
             )}
