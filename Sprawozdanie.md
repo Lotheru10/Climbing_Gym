@@ -67,7 +67,7 @@ Każdy użytkownik poza podstawowymi informacjami jak imię, nazwisko, posiada t
 }
 ```
 
-Rezerwacje są jedynie na konkretną porę dnia, stąd w `time_slots` przetrzymywane są dni z podziałem na ranek, południe i wieczór.
+Rezerwacje są jedynie na konkretną porę dnia, stąd w `time_slots` przetrzymywane są dni z podziałem na ranek, południe i wieczór, zawierają ogarniczenie miejsc i na bieżąco aktualizowaną ilość miejsc zajętych.
 
 #### `entry_types`
 
@@ -91,7 +91,7 @@ Kolekcja utrzymująca wszystkie możliwe do zakupienia wejściówki, trzyma info
 
 Najpierw zostały stworzone klasy przetrzymujące obiekty z bazy.
 
-![1749925830307](sprawozdanieImg/Sprawozdanie/1749925830307.png)
+![1749925830307](sprawozdanieImg/1749925830307.png)
 
 Klasy `User`, `TimeSlot` i `EntryType` są oznaczone adnotacją `@Document`, co informuje Spring Data MongoDB, że odpowiadają konkretnym kolekcjom w bazie danych. Dzięki temu framework automatycznie mapuje obiekty tych klas na dokumenty w MongoDB i umożliwia ich zapisywanie oraz odczytywanie z odpowiednich kolekcji.
 
@@ -115,11 +115,11 @@ public class User {
 }
 ```
 
-### Obsługa HTTP
+### Struktura aplikacji
 
 Następnie dla każdej kolekcji powstało `Repository`, `Service` i `Controller`.
 
-![1749927100404](sprawozdanieImg/Sprawozdanie/1749927100404.png)
+![1749927100404](sprawozdanieImg/1749927100404.png)
 
 1. `Repository` to interfejsy dziedziczące po `MongoRepository`, które automatycznie udostępniają gotowe metody do podstawowych operacji CRUD (create, read, update, delete). Dodatkowo pozwalają definiować własne, proste metody zapytań, oparte na nazwach metod, bez potrzeby pisania ich ręcznie.
 
@@ -130,7 +130,7 @@ Następnie dla każdej kolekcji powstało `Repository`, `Service` i `Controller`
    }
    ```
 
-2. `Service` to klasy zajmujące się główną logiką aplikacji - walidacją danych, obsługą wyjątków, operacjami transakcyjne. Pośredniczą między `Repository` a `Controller`.
+2. `Service` to klasy zajmujące się główną logiką aplikacji - walidacją danych, obsługą wyjątków, operacjami transakcyjnymi. Pośredniczą między `Repository` a `Controller`.
 
    ```java
    @Service
@@ -151,7 +151,7 @@ Następnie dla każdej kolekcji powstało `Repository`, `Service` i `Controller`
    }
    ```
 
-3. `Controller`to **punkt wejścia** do aplikacji – obsługuje żądania HTTP i na nie odpowiada. Przyjmuje dane z`@RequestBody`i`@PathVariable`, następnie w swoich metodach odwołuje się do `Service`i zwraca odpowiedź w formie`ResponseEntity<>()`.
+3. `Controller`to **punkt wejścia** do aplikacji – obsługuje żądania HTTP i na nie odpowiada, definiuje endpoint'y. Przyjmuje dane z`@RequestBody`i`@PathVariable`, następnie w swoich metodach odwołuje się do `Service`i zwraca odpowiedź w formie`ResponseEntity<>()`.
 
    ```java
    @RestController
@@ -169,3 +169,460 @@ Następnie dla każdej kolekcji powstało `Repository`, `Service` i `Controller`
        }
    }
    ```
+
+### Funkcjonalność aplikacji
+
+_Podstawowe operacje CRUD_
+
+Dla każdej kolekcji zostały zaimplementowane operacje CRUD. Ich logika (oparta na gotowych metodach udostępnianych przez `Repository`) została umieszczona w warstwie `Service`. Następnie `Controller` odpowiada za obsługę żądań i wywoływanie odpowiednich metod serwisowych.
+
+Podgląd implementacji operacji dla `users`
+
+```java
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    // Create
+    public User createUser(User user) {
+        if (user.getRegisterDate() == null) {
+            user.setRegisterDate(LocalDate.now());
+        }
+        return userRepository.save(user);
+    }
+
+    // Read
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    // Delete
+    public void deleteUser(String id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("User not found with id: " + id);
+        }
+    }
+
+    // Update
+    public User updateUser(String id, User updatedUser) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setFirstname(updatedUser.getFirstname());
+                    user.setLastname(updatedUser.getLastname());
+                    if (updatedUser.getRegisterDate() != null) {
+                        user.setRegisterDate(updatedUser.getRegisterDate());
+                    }
+                    if (updatedUser.getEntries() != null) {
+                        user.setEntries(updatedUser.getEntries());
+                    }
+                    if (updatedUser.getReservations() != null) {
+                        user.setReservations(updatedUser.getReservations());
+                    }
+                    return userRepository.save(user);
+                })
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+    }
+```
+
+```java
+@RestController
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    // Basic CRUD actions ============================================================
+    // Create
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        try {
+            User createdUser = userService.createUser(user);
+            return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Read
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
+    // Delete
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        try {
+            userService.deleteUser(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Update
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User user) {
+        try {
+            User updatedUser = userService.updateUser(id, user);
+            return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+    }
+```
+
+### Transakcje
+
+Aplikacja posiada wiele operacji transakcyjnych związanych z rezerwacjami oraz korzystaniem z wejściówek przez użytkowników. `@Transactional` to adnotacja w Springu, która zapewnia, że jeśli w funkcji zajdzie kiedykolwiek błąd - nastąpi rollback.
+
+Metoda dodawania nowej rezerwacji do użytkownika. Aby rezerwacja się powiodła sprawdza następujące warunki: czy użytkownik istnieje, czy jest wystarczająca liczba miejsc na daną porę, czy użytkownik ma odpowiednią ilość wejściówek.
+
+```java
+@Transactional
+public boolean addReservationToUser(String userId, Reservation reservation) {
+    ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+    lock.lock();
+
+    try {
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        if(reservation.getStatus() == 0){
+            reservation.setStatus('A');
+        }
+        reservation.setReservationId(generateReservationId());
+        LocalDate date = reservation.getDate();
+        String dayTime = reservation.getDayTime();
+        int peopleAmount = reservation.getPeopleAmount();
+        if (!timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount)) {
+            throw new RuntimeException("Not enough slots available for reservation");
+        }
+
+        int userEntries = entryService.getUsersEntryCountForDate(userId, date)
+                .values()
+                .stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        if(userEntries < reservation.getPeopleAmount()){
+            throw new RuntimeException("Not enough entries available for people reserved");
+        }
+
+        user.getReservations().add(reservation);
+        boolean timeSlotUpdated = timeSlotService.updateReservationCount(date, dayTime, peopleAmount, true);
+        if (!timeSlotUpdated) {
+            throw new RuntimeException("Failed to update time slot");
+        }
+
+        userService.updateUser(userId, user);
+        return true;
+
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to add reservation: " + e.getMessage(), e);
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+Metoda wykorzystania posiadanej wejściówki użytkownika. Sprawdza czy użytkownik istnieje oraz czy ma wystarczającą ilość wejściówek do wykorzystania.
+
+```java
+@Transactional
+public boolean useEntry(String userId, String entryId, int amount) {
+    ReentrantLock userLock = getUserLock(userId);
+    userLock.lock();
+
+    try {
+       User user = userService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        Entry entry = user.getEntries().stream()
+                .filter(e -> e.getEntryId().equals(entryId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Entry not found"));
+
+        if (entry.getAmount() < amount) {
+            throw new RuntimeException("Entry does not have enough uses");
+        }
+
+        entry.setAmount(entry.getAmount() - amount);
+        userService.updateUser(userId, user);
+        return true;
+
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to use entry: " + e.getMessage(), e);
+    } finally {
+        userLock.unlock();
+    }
+}
+```
+
+Metoda zmieniająca stan rezerwacji na anulowany. Sprawdza czy istnieje użytkownik, czy posiada rezerwację i czy nie jest już za późno na jej anulowanie.
+
+```java
+@Transactional
+public boolean cancelReservation(String userId, String reservationId) {
+    try {
+        User user = userService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        Reservation reservation = user.getReservations().stream()
+                .filter(r -> r.getReservationId().equals(reservationId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+        ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+        lock.lock();
+
+        if(reservation.getDate().isAfter(LocalDate.now().minusDays(2))) {
+            throw new RuntimeException("Reservation can be cancelled 3 days prior at latest");
+        }
+        reservation.setStatus('C');
+
+        boolean timeSlotUpdated = timeSlotService.updateReservationCount(
+                reservation.getDate(),
+                reservation.getDayTime(),
+                reservation.getPeopleAmount(),
+                false
+        );
+
+        if (!timeSlotUpdated) {
+            throw new RuntimeException("Failed to update time slot");
+        }
+
+        userService.updateUser(userId, user);
+        lock.unlock();
+        return true;
+    } catch (Exception e) {
+        throw new RuntimeException("Failed to cancel reservation: " + e.getMessage(), e);
+    }
+}
+```
+
+### Raporty
+
+Aplikacja posiada jedną implementację widoku składającego raport z tego ile na każdy time_slot jest aktywnych rezerwacji. Na jego potrzebę powstała klasa `SlotReservationsView` która defniuje format dokumentu wynikowego, klasa zawiera podklasy `ReservationSummary` i `SlotStats` odpowiadające zagnieżdżeniom.
+
+```java
+public class SlotReservationsView {
+
+    private LocalDate date;
+
+    @JsonProperty("morning_reservations")
+    private List<ReservationSummary> morningReservations;
+    @JsonProperty("noon_reservations")
+    private List<ReservationSummary> noonReservations;
+    @JsonProperty("evening_reservations")
+    private List<ReservationSummary> eveningReservations;
+    @JsonProperty("morning_stats")
+    private SlotStats morningStats;
+    @JsonProperty("noon_stats")
+    private SlotStats noonStats;
+    @JsonProperty("evening_stats")
+    private SlotStats eveningStats;
+
+    public SlotReservationsView() {}
+    public SlotReservationsView(LocalDate date) {
+        this.date = date;
+    }
+
+    // GETTERS AND SETTERS
+    ...
+
+    // Inner classes
+    public static class ReservationSummary {
+        @JsonProperty("reservation_id")
+        private String reservationId;
+        @JsonProperty("user_name")
+        private String userName;
+        @JsonProperty("user_id")
+        private String userId;
+        @JsonProperty("people_amount")
+        private int peopleAmount;
+
+        private char status;
+
+        public ReservationSummary() {}
+
+        public ReservationSummary(String reservationId, String userName, String userId,
+                                                            int peopleAmount, char status) {
+            this.reservationId = reservationId;
+            this.userName = userName;
+            this.userId = userId;
+            this.peopleAmount = peopleAmount;
+            this.status = status;
+        }
+
+        // GETTERS AND SETTERS
+        ...
+
+    public static class SlotStats {
+        @JsonProperty("max_slots")
+        private int maxSlots;
+        @JsonProperty("reserved_slots")
+        private int reservedSlots;
+        @JsonProperty("available_slots")
+        private int availableSlots;
+        @JsonProperty("total_people")
+        private int totalPeople;
+        @JsonProperty("active_reservations_count")
+        private int activeReservationsCount;
+
+        public SlotStats() {}
+
+        public SlotStats(int maxSlots, int reservedSlots, int totalPeople, int activeReservationsCount) {
+            this.maxSlots = maxSlots;
+            this.reservedSlots = reservedSlots;
+            this.availableSlots = maxSlots - reservedSlots;
+            this.totalPeople = totalPeople;
+            this.activeReservationsCount = activeReservationsCount;
+        }
+
+        // GETTERS AND SETTERS
+        ...
+    }
+}
+```
+
+Główna funkcja z `ViewService` odpowiadająca za generowanie danych do raportu.
+
+```java
+public SlotReservationsView getTimeSlotReservationsView(LocalDate date) {
+    SlotReservationsView view = new SlotReservationsView(date);
+    List<User> allUsers = userService.getAllUsers();
+    TimeSlot timeSlot = timeSlotService.getOrCreateTimeSlot(date);
+
+    List<SlotReservationsView.ReservationSummary> morningReservations = new ArrayList<>();
+    List<SlotReservationsView.ReservationSummary> noonReservations = new ArrayList<>();
+    List<SlotReservationsView.ReservationSummary> eveningReservations = new ArrayList<>();
+
+    for (User user : allUsers) {
+        for (Reservation reservation : user.getReservations()) {
+            if (reservation.getDate().equals(date) && reservation.getStatus() == 'A') {
+                SlotReservationsView.ReservationSummary summary = new SlotReservationsView.ReservationSummary(
+                        reservation.getReservationId(),
+                        user.getFirstname() + " " + user.getLastname(),
+                        user.getId(),
+                        reservation.getPeopleAmount(),
+                        reservation.getStatus()
+                );
+
+                switch (reservation.getDayTime().toLowerCase()) {
+                    case "morning":
+                        morningReservations.add(summary);
+                        break;
+                    case "noon":
+                        noonReservations.add(summary);
+                        break;
+                    case "evening":
+                        eveningReservations.add(summary);
+                        break;
+                }
+            }
+        }
+    }
+
+    view.setMorningReservations(morningReservations);
+    view.setNoonReservations(noonReservations);
+    view.setEveningReservations(eveningReservations);
+
+    view.setMorningStats(calculateSlotStats(timeSlot.getDetails().getMorning().getMaxSlots(),
+            timeSlot.getDetails().getMorning().getReservedSlots(),
+            morningReservations));
+    view.setNoonStats(calculateSlotStats(timeSlot.getDetails().getNoon().getMaxSlots(),
+            timeSlot.getDetails().getNoon().getReservedSlots(),
+            noonReservations));
+    view.setEveningStats(calculateSlotStats(timeSlot.getDetails().getEvening().getMaxSlots(),
+            timeSlot.getDetails().getEvening().getReservedSlots(),
+            eveningReservations));
+
+    return view;
+}
+```
+
+Widok można uruchomić dla
+
+- konkretnej daty
+- dnia dzisiejszego
+- wszystkich nadchodzących 30 dni
+
+```java
+@RestController
+@RequestMapping("/api/view")
+@CrossOrigin(origins = "*")
+public class ViewController {
+
+    @Autowired
+    private ViewService viewService;
+
+    @GetMapping
+    public ResponseEntity<SlotReservationsView> getTimeSlotReservations(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        try {
+            SlotReservationsView view = viewService.getTimeSlotReservationsView(date);
+            return new ResponseEntity<>(view, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<SlotReservationsView> getTodayTimeSlotReservations() {
+        try {
+            SlotReservationsView view = viewService.getTimeSlotReservationsView(LocalDate.now());
+            return new ResponseEntity<>(view, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/month")
+    public ResponseEntity<List<SlotReservationsView>> monthTimeSlotReservations() {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate weekEnd = today.plusDays(30);
+            List<SlotReservationsView> views = viewService.getTimeSlotReservationsViewRange(today, weekEnd);
+            return new ResponseEntity<>(views, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+```
+
+### Kontrola równoczesnego dostępu do danych
+
+Aby zapobiec równoczesnych zmianach w danych, które mogą prowadzić do błędów, używana jest współbieżna mapa `ConcurrentHashMap` trzymająca blokady `ReentrantLock` dla konkretnych danych. Przy rozpoczęciu operacji dane są blokowane, a dostęp do nich pozostaje zablokowany aż do zakończenia transakcji, co zapewnia bezpieczeństwo i spójność podczas jednoczesnych żądań wielu użytkowników.
+
+Użycie w `ReservationService`
+
+```java
+private final ConcurrentHashMap<String, ReentrantLock> timeSlotLocks = new ConcurrentHashMap<>();
+private ReentrantLock getTimeSlotLock(LocalDate date, String dayTime) {
+    String lockKey = date.toString() + "-" + dayTime.toLowerCase();
+    return timeSlotLocks.computeIfAbsent(lockKey, k -> new ReentrantLock());
+}
+```
+
+```java
+@Transactional
+public boolean addReservationToUser(String userId, Reservation reservation) {
+    ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+    lock.lock();
+    try {
+        ...
+    } finally {
+      lock.unlock();
+    }
+}
+```
