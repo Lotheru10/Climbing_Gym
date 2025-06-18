@@ -150,7 +150,7 @@ public class EntryService {
 
         return user.getEntries().stream()
                 .filter(entry -> entry.getAmount() > 0)
-                .filter(entry -> entry.getDeadline().isAfter(date))
+                .filter(entry -> entry.getDeadline().isAfter(date.minusDays(1)))
                 .toList();
     }
 

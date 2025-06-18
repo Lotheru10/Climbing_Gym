@@ -90,7 +90,7 @@ public class ReservationService {
             lock.lock();
 
 
-            if(reservation.getDate().isAfter(LocalDate.now().minusDays(2))) {
+            if(reservation.getDate().isAfter(LocalDate.now().minusDays(1))) {
                 throw new RuntimeException("Reservation can be cancelled 3 days prior at latest");
             }
             reservation.setStatus('C');
