@@ -12,6 +12,8 @@ function UserList() {
     const [activeUserForReservation, setActiveUserForReservation] = useState(null);
     const [newEntry, setNewEntry] = useState({ entryTypeId: "", type: "Regular", amount: 1 });
     const [activeUserForEntry, setActiveUserForEntry] = useState(null);
+    const today = new Date();
+
 
     useEffect(() => {
         fetch("http://localhost:8080/api/users").then(res => res.json()).then(data => setUsers(data));
@@ -51,18 +53,29 @@ function UserList() {
 
     const handleAddReservationSubmit = (e) => {
         e.preventDefault();
-        const { date, day_time, people_amount } = newReservation;
-        const validDayTimes = ["morning", "noon", "evening"];
-        if (!validDayTimes.includes(day_time) || parseInt(people_amount) < 1) return alert("Invalid reservation");
+
+
         fetch(`http://localhost:8080/api/users/${activeUserForReservation}/reservations`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ ...newReservation, reservationId: "r-temp", status: "A" })
-        }).then(() => {
-            setNewReservation({ date: "", day_time: "morning", people_amount: "1" });
-            setActiveUserForReservation(null);
-            loadUsers();
-        });
+        })
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        throw new Error(text);
+                    });
+                }
+                return res.text();
+            })
+            .then(() => {
+                setNewReservation({ date: "", day_time: "morning", people_amount: "1" });
+                setActiveUserForReservation(null);
+                loadUsers();
+            })
+            .catch(err => {
+                alert(err.message);
+            });
     };
 
     const handleCancelReservation = (userId, reservationId) => {
@@ -81,13 +94,19 @@ function UserList() {
             setNewEntry({ entryTypeId: "", type: "Regular", amount: 1 });
             setActiveUserForEntry(null);
             loadUsers();
-        }).catch(() => alert("Nie udało się dodać wejściówki"));
+        })
     };
 
     const toggleReservations = (id) => setVisibleReservations(prev => prev === id ? null : id);
     const toggleEntries = (id) => setVisibleEntries(prev => prev === id ? null : id);
 
     const filteredUsers = users.filter(user => user.lastname.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const daysUntil = (dateStr) => {
+        const diff = new Date(dateStr) - new Date();
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    };
+
 
     return (
         <div>
@@ -124,13 +143,14 @@ function UserList() {
                                     {user.reservations?.map(res => (
                                         <li key={res.reservationId}>
                                             {res.date}, {res.day_time}, {res.people_amount} people, status: {res.status}
-                                            <button onClick={() => handleCancelReservation(user.id, res.reservationId)}>Cancel</button>
+                                            {daysUntil(res.date) > 3 ?
+                                            <button onClick={() => handleCancelReservation(user.id, res.reservationId)}>Cancel</button> : ""}
                                         </li>
                                     ))}
                                 </ul>
                                 {activeUserForReservation === user.id ? (
                                     <form onSubmit={handleAddReservationSubmit}>
-                                        <input name="date" type="date" value={newReservation.date} onChange={handleReservationChange} required />
+                                        <input name="date" type="date" value={newReservation.date} onChange={handleReservationChange} />
                                         <select name="day_time" value={newReservation.day_time} onChange={handleReservationChange}>
                                             <option value="morning">morning</option>
                                             <option value="noon">noon</option>
@@ -150,7 +170,7 @@ function UserList() {
                                 <ul>
                                     {user.entries?.map(ent => (
                                         <li key={ent.entryId}>
-                                            {ent.type}, amount: {ent.amount}
+                                            {ent.type}, amount: {ent.amount}, deadline: {ent.deadline}
                                         </li>
                                     ))}
                                 </ul>
