@@ -139,6 +139,41 @@ public class ReservationService {
     }
 
     @Transactional
+    public boolean adminCancelReservation(String userId, String reservationId) {
+        try {
+            User user = userService.getUserById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+            Reservation reservation = user.getReservations().stream()
+                    .filter(r -> r.getReservationId().equals(reservationId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Reservation not found"));
+
+            ReentrantLock lock = getTimeSlotLock(reservation.getDate(), reservation.getDayTime());
+            lock.lock();
+
+            reservation.setStatus('C');
+
+            boolean timeSlotUpdated = timeSlotService.updateReservationCount(
+                    reservation.getDate(),
+                    reservation.getDayTime(),
+                    reservation.getPeopleAmount(),
+                    false
+            );
+
+            if (!timeSlotUpdated) {
+                throw new RuntimeException("Failed to update time slot");
+            }
+
+            userService.updateUser(userId, user);
+            lock.unlock();
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to cancel reservation: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional
     public boolean removeReservation(String userId, String reservationId) {
         try {
             User user = userService.getUserById(userId)
@@ -150,7 +185,7 @@ public class ReservationService {
                     .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
             if (reservation.getStatus() == 'A') {
-                boolean cancelled = cancelReservation(userId, reservationId);
+                boolean cancelled = adminCancelReservation(userId, reservationId);
                 if (!cancelled) {
                     throw new RuntimeException("Failed to cancel the reservation");
                 }
