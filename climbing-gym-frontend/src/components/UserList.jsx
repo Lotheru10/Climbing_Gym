@@ -12,8 +12,6 @@ function UserList() {
     const [activeUserForReservation, setActiveUserForReservation] = useState(null);
     const [newEntry, setNewEntry] = useState({ entryTypeId: "", type: "Regular", amount: 1 });
     const [activeUserForEntry, setActiveUserForEntry] = useState(null);
-    const today = new Date();
-
 
     useEffect(() => {
         fetch("http://localhost:8080/api/users").then(res => res.json()).then(data => setUsers(data));
@@ -142,7 +140,15 @@ function UserList() {
                                 <ul>
                                     {user.reservations?.map(res => (
                                         <li key={res.reservationId}>
+                                            {daysUntil(res.date) < 0 ? (
+                                                <span>
+                                                {res.date}, {res.day_time}, {res.people_amount} people, status: P
+                                                </span>
+                                                ) : (
+                                                    <span>
                                             {res.date}, {res.day_time}, {res.people_amount} people, status: {res.status}
+                                                        </span>
+                                            )}
                                             {daysUntil(res.date) > 3 ?
                                             <button onClick={() => handleCancelReservation(user.id, res.reservationId)}>Cancel</button> : ""}
                                         </li>
