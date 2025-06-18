@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -44,10 +46,29 @@ public class ReservationService {
             }
             reservation.setReservationId(generateReservationId());
             LocalDate date = reservation.getDate();
-            if(date.isBefore(LocalDate.now())){
+            if(date.isBefore(LocalDate.now())) {
                 throw new RuntimeException("Reservations cannot be made for the past");
             }
             String dayTime = reservation.getDayTime();
+            if(date.isEqual(LocalDate.now())) {
+                switch(dayTime){
+                    case "morning":
+                        if(LocalTime.now().isAfter(LocalTime.of(12,0))){
+                            throw new RuntimeException("Too late to make a morning reservation");
+                        }
+                        break;
+                    case "noon":
+                        if(LocalTime.now().isAfter(LocalTime.of(16,0))){
+                            throw new RuntimeException("Too late to make a noon reservation");
+                        }
+                        break;
+                    case "evening":
+                        if(LocalTime.now().isAfter(LocalTime.of(21,0))){
+                            throw new RuntimeException("Too late to make a evening reservation");
+                        }
+                        break;
+                }
+            }
             int peopleAmount = reservation.getPeopleAmount();
             if (!timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount)) {
                 throw new RuntimeException("Not enough slots available for reservation");
