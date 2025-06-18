@@ -44,6 +44,9 @@ public class ReservationService {
             }
             reservation.setReservationId(generateReservationId());
             LocalDate date = reservation.getDate();
+            if(date.isBefore(LocalDate.now())){
+                throw new RuntimeException("Reservations cannot be made for the past");
+            }
             String dayTime = reservation.getDayTime();
             int peopleAmount = reservation.getPeopleAmount();
             if (!timeSlotService.checkSlotAvailability(date, dayTime, peopleAmount)) {
