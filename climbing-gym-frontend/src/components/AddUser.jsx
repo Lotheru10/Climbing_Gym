@@ -38,7 +38,7 @@ function AddUser({ onUserAdded}) {
             <input name="lastname" onChange={handleChange} required/>
             <br></br>
             <label>Register Date:</label>
-            <input name="registerDate" type="date" onChange={handleChange} required/>
+            <input name="registerDate" type="date" onChange={handleChange} />
             <br></br>
             <button type="submit">Save</button>
         </form>
