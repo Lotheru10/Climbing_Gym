@@ -39,10 +39,10 @@ public class EntryController {
         }
     }
 
-    @PutMapping("/use")
+    @PutMapping("/use/{userId}/{entryId}")
     public ResponseEntity<String> useEntry(
-            @RequestParam String userId,
-            @RequestParam String entryId,
+            @PathVariable String userId,
+            @PathVariable String entryId,
             @RequestParam(defaultValue = "1") int amount ) {
         try {
             boolean used = entryService.useEntry(userId, entryId, amount);
