@@ -21,7 +21,7 @@ We made this project to practise work with document-oriented database, REST API 
 + Frontend to present our application
 
 # How to run
-First download full project, then open frontend catalog (climbing-gym-frontend) and use following command: npm run dev
+First download full project (git clone), then open frontend catalog (climbing-gym-frontend) and use following command in terminal: npm run dev
 
 ___
 For more details check out our documentation - Sprawozdanie.md (written in polish)
